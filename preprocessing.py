@@ -14,8 +14,8 @@ lemmatizer = WordNetLemmatizer()
 def preprocess_sentence(sentence):
     
     sentence = sentence.lower()
-    
-    sentence = list(set(sentence.split())) # Removing duplicates
+    sentence = list(sentence.split())
+    # sentence = list(set(sentence.split())) # Removing duplicates
     
     sentence = [word for word in sentence if not word in stop_words] # Removing stopwords
     
