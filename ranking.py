@@ -19,7 +19,6 @@ for i, doc in enumerate(data):
 
 
 
-
 # Okapi BM25 parameters
 k1 = 1.2
 k2 = 100
