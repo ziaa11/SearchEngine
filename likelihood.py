@@ -1,6 +1,18 @@
 import csv
 from collections import Counter
 
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer, WordNetLemmatizer
+
+#Requirments
+nltk.download('wordnet')
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+stemmer = SnowballStemmer('english')
+lemmatizer = WordNetLemmatizer()
+
 n = 2
 
 
@@ -20,7 +32,11 @@ with open('/content/data.csv', 'r') as f:
 
 tokens = []
 for sentence in data:
-    tokens.extend(sentence.split())
+    tokens = sentence.lower()
+    tokens = list(sentence.split())
+    tokens = [word for word in sentence if not word in stop_words] # Removing stopwords
+    tokens = [stemmer.stem(word) for word in sentence] # Stemming
+    tokens = [lemmatizer.lemmatize(word) for word in sentence] # Lemmatization
 
 ngrams = []
 for i in range(len(tokens) - n + 1):
@@ -31,6 +47,8 @@ smoothing_value = 1
 for ngram in counts:
     counts[ngram] += smoothing_value
 
+# Calculate n-gram probabilities
+# Calculate n-gram probabilities
 probs = {}
 for ngram, count in counts.items():
     prefix = ngram[:-1]
@@ -42,6 +60,7 @@ for ngram, count in counts.items():
     else:
         probs[prefix][ngram[-1]] = count / denominator
 
+# Set the query keyword
 query = 'celsius'
 
 results = []
