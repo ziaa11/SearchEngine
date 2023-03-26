@@ -1,6 +1,18 @@
 import csv
 from collections import Counter
 
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import SnowballStemmer, WordNetLemmatizer
+
+#Requirments
+nltk.download('wordnet')
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+stemmer = SnowballStemmer('english')
+lemmatizer = WordNetLemmatizer()
+
 # Set n to the desired n-gram size
 n = 2
 
@@ -16,7 +28,7 @@ def generate_text(prefix, length):
     return ' '.join(result)
 
   
-# Load the CSV data
+#Load the CSV data
 with open('/content/data.csv', 'r') as f:
     reader = csv.reader(f)
     data = [row[6] for row in reader]
@@ -24,7 +36,11 @@ with open('/content/data.csv', 'r') as f:
 # Tokenize the data
 tokens = []
 for sentence in data:
-    tokens.extend(sentence.split())
+    tokens = sentence.lower()
+    tokens = list(sentence.split())
+    tokens = [word for word in sentence if not word in stop_words] # Removing stopwords
+    tokens = [stemmer.stem(word) for word in sentence] # Stemming
+    tokens = [lemmatizer.lemmatize(word) for word in sentence] # Lemmatization
 
 # Build n-grams
 ngrams = []
@@ -38,7 +54,6 @@ for ngram in counts:
     counts[ngram] += smoothing_value
 
 # Calculate n-gram probabilities
-# Calculate n-gram probabilities
 probs = {}
 for ngram, count in counts.items():
     prefix = ngram[:-1]
@@ -51,7 +66,7 @@ for ngram, count in counts.items():
         probs[prefix][ngram[-1]] = count / denominator
 
 # Set the query keyword
-query = 'celsius'
+query = 'climate'
 
 # Perform keyword search and rank results
 results = []
