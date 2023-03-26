@@ -7,6 +7,7 @@ import permuterm
 import wildcards
 from collections import defaultdict
 import csv
+import numpy as np
 from ranking_func.py import ranking_of_documents
 
 #DATASET
