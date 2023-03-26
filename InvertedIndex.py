@@ -12,13 +12,19 @@ def write_index_to_file():
 
 
 def add_document(doc_id, doc_name, document):
-    doc_names[doc_id] = doc_name
+    # doc_names[doc_id] = doc_name
     for word in document:
         if word not in index:
             index[word] = {doc_id}
         else:
             index[word].add(doc_id)
     return index
+
+def doc_docid(doc_id, doc_name):
+    doc_names[doc_id] = doc_name
+    return doc_names;
+
+
 def search(query):
     words = query.split()
     result = None

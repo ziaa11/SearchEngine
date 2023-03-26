@@ -3,6 +3,8 @@ import pandas as pd
 import InvertedIndex as ind
 import posting as post
 import boolean
+import permuterm
+import wildcards
 from collections import defaultdict
 
 #DATASET
@@ -16,10 +18,13 @@ for i in range(len(terms)):
     terms[i] = pre.preprocess_sentence(terms[i])
 
 # ----------------------------------Inverted Index--------------------------------------------
-index = {}
+inverted_index = {}
+doc_docid = {}
+for i in range(len(docs)):
+    inverted_index = ind.add_document(i, docs[i], terms[i])
 
 for i in range(len(docs)):
-    index = ind.add_document(i, docs[i], terms[i])
+    doc_docid = ind.doc_docid(i, docs[i])
 
 ind.write_index_to_file()
 
@@ -37,5 +42,18 @@ post.write_postings_to_file(posting_list)
 
 # ---------------------------------BOOLEAN RETRIEVAL---------------------------------------------
 query = "( issu OR ( seen AND ODD ) ) OR minut"
-print(boolean.boolean_query(query, index))
+print(boolean.boolean_query(query, inverted_index))
 
+# -----------------------------------PERMUTERM INDEX-----------------------------------------------
+permuterm_index = {}
+permuterm_index = permuterm.generate_permuterm_index(inverted_index);
+# print(permuterm_index)
+permuterm.write_permuterm_index_to_file(permuterm_index, "permuterm_index")
+
+# -------------------------------------WILDCARD QUERY------------------------------------------------
+# result = wildcards.wildcard_search("be*", permuterm_index, inverted_index)
+# print(result)
+
+wildcard_query = "cau*"
+res=wildcards.wildcard_search(wildcard_query, permuterm_index)
+print(res)

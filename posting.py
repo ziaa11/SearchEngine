@@ -1,15 +1,11 @@
 from collections import defaultdict
 
 def generate_posting_list(doc_name, document, posting_list):
-
     terms = document
-
-    # Count term frequencies for the current document
     term_freqs = defaultdict(int)
     for term in terms:
         term_freqs[term] += 1
 
-    # Update posting list with the current document's term frequencies
     for term, freq in term_freqs.items():
         posting_list[term][doc_name] = freq
 
