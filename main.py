@@ -6,6 +6,8 @@ import boolean
 import permuterm
 import wildcards
 from collections import defaultdict
+import csv
+from ranking_func.py import ranking_of_documents
 
 #DATASET
 data = pd.read_csv("E:\TelevisionNews\BBCNEWS.201701.csv")
@@ -57,3 +59,7 @@ permuterm.write_permuterm_index_to_file(permuterm_index, "permuterm_index")
 wildcard_query = "cau*"
 res=wildcards.wildcard_search(wildcard_query, permuterm_index)
 print(res)
+
+
+#ranking of documents
+ranking_of_documents()
