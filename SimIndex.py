@@ -31,28 +31,55 @@
 # # Retrieve the top 5 similar documents
 # top_n_indices = sorted_scores_indices[:5]
 
+# import pandas as pd
+# import numpy as np
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.metrics.pairwise import cosine_similarity
+
+# # load CSV file
+# df = pd.read_csv('E:\SEM6\AIWR\Project\TelevisionNews\BBCNEWS.201701.csv')
+
+# # preprocess input text
+# input_text = "the airline industry has not been a part of this move to reduce carbon and teal last year"
+# vectorizer = TfidfVectorizer()
+# vectorizer.fit_transform([input_text])
+# input_vector = vectorizer.transform([input_text])
+
+# # preprocess CSV file
+# corpus = df['Snippet'].tolist()
+# corpus_vectors = vectorizer.transform(corpus)
+
+# # calculate cosine similarity between input and CSV file
+# cosine_similarities = cosine_similarity(input_vector, corpus_vectors).flatten()
+# related_docs_indices = cosine_similarities.argsort()[:-11:-1]
+
+# # display results
+# for index in related_docs_indices:
+#     print(df.loc[index]['URL'])
+
 import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-# load CSV file
-df = pd.read_csv('E:\SEM6\AIWR\Project\TelevisionNews\BBCNEWS.201701.csv')
+def get_related_urls(input_text, csv_path):
+    # load CSV filecsv
+    df = pd.read_csv("E:\SEM6\AIWR\Project\TelevisionNews\BBCNEWS.201701.csv")
 
-# preprocess input text
-input_text = "the airline industry has not been a part of this move to reduce carbon and teal last year"
-vectorizer = TfidfVectorizer()
-vectorizer.fit_transform([input_text])
-input_vector = vectorizer.transform([input_text])
+    # preprocess input text
+    vectorizer = TfidfVectorizer()
+    vectorizer.fit_transform([input_text])
+    input_vector = vectorizer.transform([input_text])
 
-# preprocess CSV file
-corpus = df['Snippet'].tolist()
-corpus_vectors = vectorizer.transform(corpus)
+    # preprocess CSV file
+    corpus = df['Snippet'].tolist()
+    corpus_vectors = vectorizer.transform(corpus)
 
-# calculate cosine similarity between input and CSV file
-cosine_similarities = cosine_similarity(input_vector, corpus_vectors).flatten()
-related_docs_indices = cosine_similarities.argsort()[:-11:-1]
+    # calculate cosine similarity between input and CSV file
+    cosine_similarities = cosine_similarity(input_vector, corpus_vectors).flatten()
+    related_docs_indices = cosine_similarities.argsort()[:-11:-1]
 
-# display results
-for index in related_docs_indices:
-    print(df.loc[index]['URL'])
+    # return list of top 10 related URLs
+    related_urls = [df.loc[index]['URL'] for index in related_docs_indices]
+    return related_urls
+
