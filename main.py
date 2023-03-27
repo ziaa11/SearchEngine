@@ -66,3 +66,9 @@ relevance_retrival_likelihood_with_ngrams("/content/data.csv", "climate change",
 
 #ranking of documents
 ranking_of_documents()
+
+
+
+#----------------------------------RANKED RETRIEVAL BASED ON SIMILARITY INDEX----------------------------------------
+related_urls = get_related_urls("the airline industry has not been a part of this move to reduce carbon and teal last year", "E:\TelevisionNews\BBCNEWS.201701.csv")
+print(related_urls)
