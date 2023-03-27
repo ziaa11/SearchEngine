@@ -61,6 +61,8 @@ wildcard_query = "cau*"
 res=wildcards.wildcard_search(wildcard_query, permuterm_index)
 print(res)
 
+# -------------------------------------RELEVANCE RETRIVAL OF TEXT USING LIKELIHOOD LANGUAGE MODEL------------------------------------------------
+relevance_retrival_likelihood_with_ngrams("/content/data.csv", "climate change", n=2, prefix_length=10)
 
 #ranking of documents
 ranking_of_documents()
