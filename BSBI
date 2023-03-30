@@ -1,0 +1,148 @@
+import os
+import json
+import struct
+import heapq
+from collections import defaultdict
+
+# Function to split the documents into blocks
+def split_blocks(docs, block_size):
+    for i in range(0, len(docs), block_size):
+        yield docs[i:i + block_size]
+
+# Function to create the inverted index for a block
+def create_index(docs):
+    index = defaultdict(list)
+    for doc_id, doc in enumerate(docs):
+        for field in ['URL', 'MatchDateTime', 'Station', 'Show', 'IAShowID', 'IAPreview', 'Snippet']:
+            for term in doc[field].split():
+                index[term].append(doc_id)
+    return index
+
+# Function to merge the inverted indexes for multiple blocks
+def merge_indexes(blocks):
+    inverted_index = defaultdict(list)
+    block_ptrs = [0] * len(blocks)
+    heap = []
+    for i, block in enumerate(blocks):
+        if block:
+            term, postings = next(block.items())
+            heap.append((term, i, postings))
+    heapq.heapify(heap)
+    while heap:
+        term, block_id, postings = heap[0]
+        if len(heap) == 1 or term != heap[1][0]:
+            for doc_id in postings:
+                inverted_index[term].append(doc_id)
+            heap.pop(0)
+            block_ptrs[block_id] += 1
+            if block_ptrs[block_id] < len(blocks[block_id]):
+                term, postings = next(iter(blocks[block_id].items()))
+                heap.append((term, block_id, postings))
+            heapq.heapify(heap)
+        else:
+            term2, block_id2, postings2 = heapq.heappop(heap)
+            merged_postings = []
+            ptr1, ptr2 = 0, 0
+            while ptr1 < len(postings) and ptr2 < len(postings2):
+                if postings[ptr1] == postings2[ptr2]:
+                    merged_postings.append(postings[ptr1])
+                    ptr1 += 1
+                    ptr2 += 1
+                elif postings[ptr1] < postings2[ptr2]:
+                    ptr1 += 1
+                else:
+                    ptr2 += 1
+            for doc_id in merged_postings:
+                inverted_index[term].append(doc_id)
+            block_ptrs[block_id] += 1
+            block_ptrs[block_id2] += 1
+            if block_ptrs[block_id] < len(blocks[block_id]):
+                term, postings = next(iter(blocks[block_id].items()))
+                heap.append((term, block_id, postings))
+            if block_ptrs[block_id2] < len(blocks[block_id2]):
+                term, postings = next(iter(blocks[block_id2].items()))
+                heap.append((term, block_id2, postings))
+            heapq.heapify(heap)
+    return inverted_index
+
+# Function to compress the inverted index using variable byte encoding
+def compress_index(inverted_index):
+    compressed_index = {}
+    for term, postings in inverted_index.items():
+        bytes_list = []
+        for doc_id in postings:
+            while doc_id >= 128:
+                bytes_list.append((doc_id & 127) | 128)
+                doc_id >>= 7
+            bytes_list.append(doc_id)
+        compressed_index[term] = bytes(bytes_list)
+    return compressed_index
+
+
+
+# Function to save the compressed inverted index to disk
+def save_index(index, filename):
+    with open(filename, 'wb') as f:
+        for term, data in index.items():
+            term_len = len(term)
+            f.write(struct.pack('I', term_len))
+            f.write(term.encode('utf-8'))
+            f.write(data)
+
+# Function to build the index from the collection of documents
+def build_index(docs, block_size, index_file):
+    blocks = split_blocks(docs, block_size)
+    for i, block in enumerate(blocks):
+        print(f'Processing block {i+1}...')
+        inverted_index = create_index(block)
+        compressed_index = compress_index(inverted_index)
+        save_index(compressed_index, f'{index_file}.block{i+1}.idx')
+    merge_index_files([f'{index_file}.block{i+1}.idx' for i in range(i+1)], f'{index_file}.idx')
+    for i in range(i+1):
+        os.remove(f'{index_file}.block{i+1}.idx')
+
+# Function to load the compressed inverted index from disk
+def load_index(filename):
+    index = {}
+    with open(filename, 'rb') as f:
+        while True:
+            term_len = f.read(4)
+            if not term_len:
+                break
+            term_len = struct.unpack('I', term_len)[0]
+            term = f.read(term_len).decode('utf-8')
+            data = f.read()
+            index[term] = data
+    return index
+
+# Function to query the inverted index
+def query_index(query, index):
+    postings = []
+    for term in query.split():
+        if term in index:
+            data = index[term]
+            while data:
+                doc_id = 0
+                shift = 0
+                while True:
+                    byte = data[0]
+                    data = data[1:]
+                    doc_id |= (byte & 127) << shift
+                    shift += 7
+                    if byte < 128:
+                        break
+                postings.append(doc_id)
+        else:
+            postings.append([])
+    result = set(postings[0])
+    for p in postings[1:]:
+        result &= set(p)
+    return result
+
+# Sample usage
+if __name__ == '__main__':
+    docs = [
+        {'URL': 'http://example.com/doc1', 'MatchDateTime': '2022-01-01 10:00:00', 'Station': 'BBC', 'Show': 'News', 'IAShowID': '1234', 'IAPreview': 'Preview of the news', 'Snippet': 'This is a snippet from the news'},
+        {'URL': 'http://example.com/doc2', 'MatchDateTime': '2022-01-02 11:00:00', 'Station': 'CNN', 'Show': 'Politics', 'IAShowID': '5678', 'IAPreview': 'Preview of the politics show', 'Snippet': 'This is a snippet from the politics show'},
+        {'URL': 'http://example.com/doc3', 'MatchDateTime': '2022-01-03 12:00:00', 'Station': 'BBC', 'Show': 'Sports', 'IAShowID': '9012', 'IAPreview': 'Preview of the sports show', 'Snippet': 'This is a snippet from the sports show'},
+        {'URL': 'http://example.com/doc4', 'MatchDateTime': '2022-01-04 13:00:00', 'Station': 'CNN', 'Show': 'Entertainment', 'IAShowID': '345'}]
